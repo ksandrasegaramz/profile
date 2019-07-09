@@ -34,8 +34,8 @@ public class MellonAutoLoginProcessor implements RequestSecurityProcessor {
     public static final Logger logger = LoggerFactory.getLogger(MellonAutoLoginProcessor.class);
 
     public static final String DEFAULT_MELLON_HEADER_PREFIX = "MELLON_";
-    public static final String DEFAULT_USERNAME_HEADER_NAME = DEFAULT_MELLON_HEADER_PREFIX + "username";
-    public static final String DEFAULT_EMAIL_HEADER_NAME = DEFAULT_MELLON_HEADER_PREFIX + "email";
+    public static final String DEFAULT_USERNAME_HEADER_NAME = "username"; // DEFAULT_MELLON_HEADER_PREFIX + "username";
+    public static final String DEFAULT_EMAIL_HEADER_NAME = "email"; // DEFAULT_MELLON_HEADER_PREFIX + "email";
 
     protected TenantService tenantService;
     protected ProfileService profileService;
@@ -89,6 +89,7 @@ public class MellonAutoLoginProcessor implements RequestSecurityProcessor {
         String username = request.getHeader(usernameHeaderName);
         Authentication auth = SecurityUtils.getAuthentication(request);
 
+        logger.info("The login usernameHeaderName={}", usernameHeaderName);
         if (StringUtils.isNotEmpty(username) && (auth == null || !auth.getProfile().getUsername().equals(username))) {
             String[] tenantNames = tenantsResolver.getTenants();
             Tenant tenant = getSsoEnabledTenant(tenantNames);
@@ -97,6 +98,8 @@ public class MellonAutoLoginProcessor implements RequestSecurityProcessor {
                 Profile profile = profileService.getProfileByUsername(tenant.getName(), username);
                 if (profile == null) {
                     profile = createProfileWithSsoInfo(username, tenant, request);
+                    logger.info("After creating profile with SSO info: ");
+                    logger.info("The username={}, email={}, role={}, tenant={}", profile.getUsername(), profile.getEmail(), profile.getRoles(), profile.getTenant());
                 }
 
                 SecurityUtils.setAuthentication(request, authenticationManager.authenticateUser(profile));
